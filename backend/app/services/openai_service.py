@@ -3,6 +3,7 @@ OpenAI Service for interview conversation management
 """
 
 import os
+import json
 from openai import OpenAI
 from typing import List, Dict, Optional
 from app.models.schemas import InterviewType, Verbosity, Tone, Message
@@ -166,7 +167,6 @@ Be specific and actionable in your feedback. Reference specific moments from the
         max_tokens=1000
     )
     
-    import json
     try:
         return json.loads(response.choices[0].message.content)
     except json.JSONDecodeError:

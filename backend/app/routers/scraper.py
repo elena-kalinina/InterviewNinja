@@ -7,6 +7,7 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import List
 import os
+import json
 from openai import OpenAI
 
 from app.models.schemas import ScrapeRequest, ScrapeResponse, Problem
@@ -84,7 +85,6 @@ Return ONLY valid JSON, no other text."""
             max_tokens=2000
         )
         
-        import json
         result = json.loads(response.choices[0].message.content)
         
         problems = []
