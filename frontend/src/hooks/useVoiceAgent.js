@@ -2,7 +2,7 @@
  * Voice Agent Hook - Manages voice interview state and interactions
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import api from '../services/api';
 
 export function useVoiceAgent() {
@@ -24,6 +24,42 @@ export function useVoiceAgent() {
   const audioRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const selectedVoiceRef = useRef(null);
+
+  // Preload voices on mount - voices load asynchronously in browsers
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      if (voices.length > 0) {
+        // Find a female voice
+        const femaleVoice = voices.find(v => 
+          v.name.toLowerCase().includes('samantha') ||  // macOS
+          v.name.toLowerCase().includes('victoria') ||  // macOS
+          v.name.toLowerCase().includes('karen') ||     // macOS Australian
+          v.name.toLowerCase().includes('female') ||
+          v.name.toLowerCase().includes('zira') ||      // Windows
+          v.name.toLowerCase().includes('hazel') ||     // Windows UK
+          v.name.toLowerCase().includes('susan')        // Windows UK
+        );
+        selectedVoiceRef.current = femaleVoice || voices[0];
+        console.log('Selected voice:', selectedVoiceRef.current?.name);
+      }
+    };
+
+    // Load voices immediately if available
+    loadVoices();
+    
+    // Also listen for voiceschanged event (fires when voices are loaded)
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
 
   // Speak text using browser's SpeechSynthesis (must be defined first!)
   const speakText = useCallback((text) => {
@@ -42,16 +78,9 @@ export function useVoiceAgent() {
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     
-    // Try to find a female voice
-    const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(v => 
-      v.name.toLowerCase().includes('female') || 
-      v.name.toLowerCase().includes('samantha') ||
-      v.name.toLowerCase().includes('victoria') ||
-      v.name.toLowerCase().includes('karen')
-    );
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    // Use preloaded female voice
+    if (selectedVoiceRef.current) {
+      utterance.voice = selectedVoiceRef.current;
     }
     
     utterance.onend = () => {
