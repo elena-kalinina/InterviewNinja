@@ -47,3 +47,4 @@ logs/
 .coverage
 htmlcov/
 .pytest_cache/
+plan.md
