@@ -43,6 +43,12 @@ export default function MLTheoryTab({ voiceAgent }) {
   const [notes, setNotes] = useState('');
   const [copiedIdx, setCopiedIdx] = useState(null);
 
+  // Clear any context provider from other tabs when switching to ML Theory
+  // (formulas are for self-checking, interviewer focuses on verbal explanations)
+  useEffect(() => {
+    voiceAgent.clearContextProvider();
+  }, [voiceAgent.clearContextProvider]);
+
   // Parse notes for LaTeX formulas
   const renderedNotes = useMemo(() => {
     if (!notes) return null;

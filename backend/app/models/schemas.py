@@ -51,6 +51,7 @@ class StartSessionResponse(BaseModel):
 class RespondRequest(BaseModel):
     session_id: str
     user_message: str
+    context: Optional[str] = None  # Additional context (e.g., formulas, code, drawings)
 
 
 class RespondResponse(BaseModel):

@@ -99,10 +99,15 @@ async def respond(request: RespondRequest):
     
     session = sessions[request.session_id]
     
+    # Build user message content, including context if provided
+    user_content = request.user_message
+    if request.context:
+        user_content = f"{request.user_message}\n\n[Context - User's written work]:\n{request.context}"
+    
     # Add user message to history
     session["messages"].append({
         "role": "user",
-        "content": request.user_message,
+        "content": user_content,
         "timestamp": datetime.now().isoformat()
     })
     

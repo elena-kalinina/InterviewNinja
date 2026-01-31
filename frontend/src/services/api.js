@@ -43,12 +43,13 @@ class ApiService {
     });
   }
 
-  async respond(sessionId, userMessage) {
+  async respond(sessionId, userMessage, context = null) {
     return this.fetch('/voice/respond', {
       method: 'POST',
       body: JSON.stringify({
         session_id: sessionId,
         user_message: userMessage,
+        context: context,
       }),
     });
   }

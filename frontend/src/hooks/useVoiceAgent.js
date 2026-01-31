@@ -25,6 +25,7 @@ export function useVoiceAgent() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const selectedVoiceRef = useRef(null);
+  const contextProviderRef = useRef(null);  // Tabs can register a function to provide context
 
   // Preload voices on mount - voices load asynchronously in browsers
   useEffect(() => {
@@ -181,8 +182,18 @@ export function useVoiceAgent() {
     }
   }, [settings, playElevenLabsAudio]);
 
+  // Allow tabs to register a context provider function
+  const setContextProvider = useCallback((providerFn) => {
+    contextProviderRef.current = providerFn;
+  }, []);
+
+  // Clear context provider (when switching tabs)
+  const clearContextProvider = useCallback(() => {
+    contextProviderRef.current = null;
+  }, []);
+
   // Send user response and get AI reply
-  const sendResponse = useCallback(async (userMessage) => {
+  const sendResponse = useCallback(async (userMessage, context = null) => {
     if (!sessionId) {
       setError('No active session');
       return;
@@ -191,7 +202,10 @@ export function useVoiceAgent() {
     setIsLoading(true);
     setError(null);
 
-    // Add user message immediately
+    // If no context provided, try to get it from the registered context provider
+    const finalContext = context ?? (contextProviderRef.current ? contextProviderRef.current() : null);
+
+    // Add user message immediately (show just the message in chat, context is sent to backend)
     const userMsg = {
       role: 'user',
       content: userMessage,
@@ -200,7 +214,7 @@ export function useVoiceAgent() {
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const response = await api.respond(sessionId, userMessage);
+      const response = await api.respond(sessionId, userMessage, finalContext);
 
       // Add interviewer response
       const interviewerMsg = {
@@ -358,6 +372,8 @@ export function useVoiceAgent() {
     playAudio,
     stopAudio,
     updateSettings,
+    setContextProvider,
+    clearContextProvider,
     clearError: () => setError(null),
   };
 }

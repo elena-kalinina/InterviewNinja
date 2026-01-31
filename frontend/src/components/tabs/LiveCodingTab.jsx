@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Play, RotateCcw, Loader2, Terminal, MessageSquare } from 'lucide-react';
 import api from '../../services/api';
@@ -21,6 +21,38 @@ export default function LiveCodingTab({ voiceAgent }) {
   const [language, setLanguage] = useState('python');
   const [showChat, setShowChat] = useState(true);
   const editorRef = useRef(null);
+  const codeRef = useRef(code);
+  const outputRef = useRef(output);
+  const languageRef = useRef(language);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    codeRef.current = code;
+  }, [code]);
+  
+  useEffect(() => {
+    outputRef.current = output;
+  }, [output]);
+  
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
+
+  // Register context provider for voice messages
+  useEffect(() => {
+    voiceAgent.setContextProvider(() => {
+      let context = `Code written by the candidate (${languageRef.current}):\n\`\`\`${languageRef.current}\n${codeRef.current}\n\`\`\``;
+      const currentOutput = outputRef.current;
+      if (currentOutput && currentOutput !== 'Click "Run" to execute your code') {
+        context += `\n\nExecution output:\n${currentOutput}`;
+      }
+      return context;
+    });
+
+    return () => {
+      voiceAgent.clearContextProvider();
+    };
+  }, [voiceAgent.setContextProvider, voiceAgent.clearContextProvider]);
 
   const handleEditorMount = (editor) => {
     editorRef.current = editor;
@@ -55,6 +87,16 @@ export default function LiveCodingTab({ voiceAgent }) {
   const handleReset = () => {
     setCode(DEFAULT_CODE);
     setOutput('');
+  };
+
+  // Wrap sendResponse to include code as context
+  const handleSendMessage = (message) => {
+    // Include current code and output as context for the interviewer
+    let context = `Code written by the candidate (${language}):\n\`\`\`${language}\n${code}\n\`\`\``;
+    if (output && output !== 'Click "Run" to execute your code') {
+      context += `\n\nExecution output:\n${output}`;
+    }
+    voiceAgent.sendResponse(message, context);
   };
 
   return (
@@ -145,7 +187,7 @@ export default function LiveCodingTab({ voiceAgent }) {
         <div className="w-96">
           <ChatPanel 
             messages={voiceAgent.messages}
-            onSendMessage={voiceAgent.sendResponse}
+            onSendMessage={handleSendMessage}
             isLoading={voiceAgent.isLoading}
             disabled={!voiceAgent.isSessionActive}
           />
