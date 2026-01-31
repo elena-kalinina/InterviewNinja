@@ -83,6 +83,12 @@ VERBOSITY_MODIFIERS = {
     Verbosity.HIGH: "Provide detailed explanations and context. Elaborate on concepts when relevant."
 }
 
+# Model selection - use faster model for coaching, gpt-4 for technical interviews
+def get_model_for_interview(interview_type: InterviewType) -> str:
+    if interview_type == InterviewType.COACHING:
+        return "gpt-3.5-turbo"  # Faster for conversational coaching
+    return "gpt-4"  # Better quality for technical interviews
+
 
 def build_system_prompt(
     interview_type: InterviewType,
@@ -126,8 +132,9 @@ def get_opening_message(
         user_prompt = "Start the interview. Introduce yourself briefly and ask an opening question to begin the session. Keep it concise (2-3 sentences max)."
     
     try:
+        model = get_model_for_interview(interview_type)
         response = client.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -161,8 +168,9 @@ async def generate_response(
         role = "assistant" if msg["role"] == "interviewer" else "user"
         openai_messages.append({"role": role, "content": msg["content"]})
     
+    model = get_model_for_interview(interview_type)
     response = client.chat.completions.create(
-        model="gpt-4",
+        model=model,
         messages=openai_messages,
         temperature=0.7,
         max_tokens=500
