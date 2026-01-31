@@ -122,8 +122,8 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
   };
 
   return (
-    <div className="glass-card p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+    <div className="glass-card p-6 space-y-5">
+      <h3 className="text-lg font-semibold text-gray-400 uppercase tracking-wider">
         Voice Controls
       </h3>
 
@@ -134,21 +134,21 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
           <button
             onClick={handleStartSession}
             disabled={isLoading}
-            className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50"
+            className="flex-1 btn-primary flex items-center justify-center gap-3 text-lg py-4 disabled:opacity-50"
           >
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-6 h-6 animate-spin" />
             ) : (
-              <Play className="w-5 h-5" />
+              <Play className="w-6 h-6" />
             )}
             Start Interview
           </button>
         ) : (
           <button
             onClick={handleEndSession}
-            className="flex-1 btn-danger flex items-center justify-center gap-2"
+            className="flex-1 btn-danger flex items-center justify-center gap-3 text-lg py-4"
           >
-            <Square className="w-5 h-5" />
+            <Square className="w-6 h-6" />
             End Session
           </button>
         )}
@@ -156,11 +156,11 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
 
       {/* Mic Button */}
       {isSessionActive && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <button
             onClick={handleMicToggle}
             disabled={isLoading || isPlaying}
-            className={`w-full py-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+            className={`w-full py-5 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-3 ${
               isRecording || isTranscribing
                 ? 'bg-red-500 text-white mic-recording'
                 : 'bg-navy-700 text-white hover:bg-navy-600 border border-white/10'
@@ -168,12 +168,12 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
           >
             {isRecording || isTranscribing ? (
               <>
-                <MicOff className="w-5 h-5" />
+                <MicOff className="w-6 h-6" />
                 Stop Recording
               </>
             ) : (
               <>
-                <Mic className="w-5 h-5" />
+                <Mic className="w-6 h-6" />
                 Hold to Speak
               </>
             )}
@@ -181,23 +181,23 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
 
           {/* Transcript Preview */}
           {transcript && (
-            <div className="p-3 bg-navy-800 rounded-lg text-sm text-gray-300 italic">
+            <div className="p-4 bg-navy-800 rounded-lg text-base text-gray-300 italic">
               "{transcript}"
             </div>
           )}
 
           {/* Audio Status */}
           {isPlaying && (
-            <div className="flex items-center justify-between p-3 bg-electric-500/20 rounded-lg">
-              <div className="flex items-center gap-2 text-electric-400">
-                <Volume2 className="w-4 h-4 animate-pulse" />
-                <span className="text-sm">Playing response...</span>
+            <div className="flex items-center justify-between p-4 bg-electric-500/20 rounded-lg">
+              <div className="flex items-center gap-3 text-electric-400">
+                <Volume2 className="w-5 h-5 animate-pulse" />
+                <span className="text-base">Playing response...</span>
               </div>
               <button
                 onClick={stopAudio}
-                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
               >
-                <VolumeX className="w-4 h-4" />
+                <VolumeX className="w-5 h-5" />
               </button>
             </div>
           )}
@@ -206,21 +206,21 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
 
       {/* Session Actions */}
       {messages.length > 0 && (
-        <div className="flex gap-2 pt-2 border-t border-white/10">
+        <div className="flex gap-3 pt-3 border-t border-white/10">
           <button
             onClick={handleSave}
             disabled={isLoading}
-            className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm py-2"
+            className="flex-1 btn-secondary flex items-center justify-center gap-2 text-base py-3"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-5 h-5" />
             Save
           </button>
           <button
             onClick={handleAnalyze}
             disabled={isLoading || messages.length < 2}
-            className="flex-1 btn-primary flex items-center justify-center gap-2 text-sm py-2"
+            className="flex-1 btn-primary flex items-center justify-center gap-2 text-base py-3"
           >
-            <BarChart3 className="w-4 h-4" />
+            <BarChart3 className="w-5 h-5" />
             Analyze
           </button>
         </div>
@@ -228,9 +228,9 @@ export default function VoiceControls({ voiceAgent, onAnalyze }) {
 
       {/* Loading Indicator */}
       {isLoading && !isRecording && (
-        <div className="flex items-center justify-center gap-2 text-electric-400 py-2">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="text-sm">Processing...</span>
+        <div className="flex items-center justify-center gap-3 text-electric-400 py-3">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-base">Processing...</span>
         </div>
       )}
     </div>

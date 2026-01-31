@@ -56,24 +56,24 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
   };
 
   return (
-    <div className="glass-card p-4 space-y-5">
-      <div className="flex items-center gap-2 text-gray-400">
-        <Settings className="w-4 h-4" />
-        <h3 className="text-sm font-semibold uppercase tracking-wider">
+    <div className="glass-card p-6 space-y-6">
+      <div className="flex items-center gap-3 text-gray-400">
+        <Settings className="w-6 h-6" />
+        <h3 className="text-lg font-semibold uppercase tracking-wider">
           Interview Settings
         </h3>
       </div>
 
       {/* Verbosity */}
-      <div className="space-y-2">
-        <label className="text-sm text-gray-400">Verbosity</label>
+      <div className="space-y-3">
+        <label className="text-base font-medium text-gray-300">Verbosity</label>
         <div className="toggle-group">
           {VERBOSITY_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => onSettingsChange({ verbosity: option.value })}
               disabled={disabled}
-              className={`toggle-option flex-1 ${
+              className={`toggle-option flex-1 text-base py-3 ${
                 settings.verbosity === option.value ? 'selected' : ''
               } disabled:opacity-50`}
             >
@@ -84,15 +84,15 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
       </div>
 
       {/* Tone */}
-      <div className="space-y-2">
-        <label className="text-sm text-gray-400">Interviewer Tone</label>
+      <div className="space-y-3">
+        <label className="text-base font-medium text-gray-300">Interviewer Tone</label>
         <div className="toggle-group">
           {TONE_OPTIONS.map((option) => (
             <button
               key={option.value}
               onClick={() => onSettingsChange({ tone: option.value })}
               disabled={disabled}
-              className={`toggle-option flex-1 ${
+              className={`toggle-option flex-1 text-base py-3 ${
                 settings.tone === option.value ? 'selected' : ''
               } disabled:opacity-50`}
             >
@@ -103,8 +103,8 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
       </div>
 
       {/* Problem Source */}
-      <div className="space-y-2">
-        <label className="text-sm text-gray-400">Problem Source</label>
+      <div className="space-y-3">
+        <label className="text-base font-medium text-gray-300">Problem Source</label>
         <div className="toggle-group">
           {SOURCE_OPTIONS.map((option) => {
             const Icon = option.icon;
@@ -113,11 +113,11 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
                 key={option.value}
                 onClick={() => onSettingsChange({ problemSource: option.value })}
                 disabled={disabled}
-                className={`toggle-option flex-1 flex items-center justify-center gap-1.5 ${
+                className={`toggle-option flex-1 flex items-center justify-center gap-2 text-base py-3 ${
                   settings.problemSource === option.value ? 'selected' : ''
                 } disabled:opacity-50`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-5 h-5" />
                 {option.label}
               </button>
             );
@@ -127,39 +127,39 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
 
       {/* Problem Description Input */}
       {settings.problemSource === 'description' && (
-        <div className="space-y-2">
-          <label className="text-sm text-gray-400">Problem Description</label>
+        <div className="space-y-3">
+          <label className="text-base font-medium text-gray-300">Problem Description</label>
           <textarea
             value={settings.problemDescription}
             onChange={(e) => onSettingsChange({ problemDescription: e.target.value })}
             disabled={disabled}
             placeholder="Enter problem description or topic (e.g., 'LeetCode Blind 75 - Two Sum')"
-            className="input-field h-24 resize-none text-sm"
+            className="input-field h-32 resize-none text-base"
           />
         </div>
       )}
 
       {/* URL Input */}
       {settings.problemSource === 'url' && (
-        <div className="space-y-3">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Problem URL</label>
-            <div className="flex gap-2">
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <label className="text-base font-medium text-gray-300">Problem URL</label>
+            <div className="flex gap-3">
               <input
                 type="url"
                 value={settings.problemUrl}
                 onChange={(e) => onSettingsChange({ problemUrl: e.target.value })}
                 disabled={disabled || isScrapingUrl}
                 placeholder="https://leetcode.com/problems/..."
-                className="input-field text-sm flex-1"
+                className="input-field text-base flex-1"
               />
               <button
                 onClick={handleScrapeUrl}
                 disabled={disabled || isScrapingUrl || !settings.problemUrl}
-                className="btn-secondary px-4 disabled:opacity-50"
+                className="btn-secondary px-5 py-3 text-base disabled:opacity-50"
               >
                 {isScrapingUrl ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   'Scrape'
                 )}
@@ -169,28 +169,28 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
 
           {/* Scrape Error */}
           {scrapeError && (
-            <div className="text-sm text-red-400 bg-red-500/10 p-2 rounded-lg">
+            <div className="text-base text-red-400 bg-red-500/10 p-3 rounded-lg">
               {scrapeError}
             </div>
           )}
 
           {/* Scraped Problems */}
           {scrapedProblems.length > 0 && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Extracted Problems</label>
-              <div className="max-h-40 overflow-y-auto space-y-2">
+            <div className="space-y-3">
+              <label className="text-base font-medium text-gray-300">Extracted Problems</label>
+              <div className="max-h-48 overflow-y-auto space-y-2">
                 {scrapedProblems.map((problem, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleProblemSelect(problem)}
                     disabled={disabled}
-                    className="w-full text-left p-2 bg-navy-800 hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
+                    className="w-full text-left p-3 bg-navy-800 hover:bg-navy-700 rounded-lg transition-colors disabled:opacity-50"
                   >
-                    <div className="font-medium text-sm text-white truncate">
+                    <div className="font-medium text-base text-white truncate">
                       {problem.name}
                     </div>
                     {problem.difficulty && (
-                      <span className={`text-xs ${
+                      <span className={`text-sm ${
                         problem.difficulty === 'easy' ? 'text-green-400' :
                         problem.difficulty === 'medium' ? 'text-yellow-400' :
                         'text-red-400'
@@ -206,9 +206,9 @@ export default function SettingsPanel({ settings, onSettingsChange, disabled }) 
 
           {/* Selected Problem Preview */}
           {settings.problemDescription && (
-            <div className="space-y-2">
-              <label className="text-sm text-gray-400">Selected Problem</label>
-              <div className="p-2 bg-navy-800 rounded-lg text-xs text-gray-300 max-h-24 overflow-y-auto">
+            <div className="space-y-3">
+              <label className="text-base font-medium text-gray-300">Selected Problem</label>
+              <div className="p-3 bg-navy-800 rounded-lg text-sm text-gray-300 max-h-32 overflow-y-auto">
                 {settings.problemDescription.slice(0, 300)}
                 {settings.problemDescription.length > 300 && '...'}
               </div>

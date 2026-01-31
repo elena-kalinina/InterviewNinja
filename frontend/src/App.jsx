@@ -102,7 +102,7 @@ function App() {
       {/* Main Content */}
       <main className="flex-1 flex max-w-[1800px] mx-auto w-full">
         {/* Settings Sidebar */}
-        <aside className="w-80 p-4 border-r border-white/10 flex flex-col gap-4">
+        <aside className="w-96 p-4 border-r border-white/10 flex flex-col gap-4">
           <SettingsPanel 
             settings={voiceAgent.settings}
             onSettingsChange={voiceAgent.updateSettings}
