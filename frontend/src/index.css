@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --color-navy-900: #0f172a;
+  --color-navy-800: #1e293b;
+  --color-navy-700: #334155;
+  --color-navy-600: #475569;
+  --color-electric-500: #3b82f6;
+  --color-electric-400: #60a5fa;
+  --color-electric-300: #93c5fd;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: linear-gradient(135deg, var(--color-navy-900) 0%, #0c1222 100%);
+  color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* Glassmorphism card styles */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
+.glass-card-light {
+  background: rgba(51, 65, 85, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+/* Tab styles */
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.tab-button:hover {
+  background-color: rgba(51, 65, 85, 0.5);
+}
+
+.tab-button.active {
+  background-color: var(--color-electric-500);
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.25);
+}
+
+/* Button styles */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-electric-500);
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.25);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-electric-400);
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-navy-700);
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-navy-600);
+}
+
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  background-color: rgba(239, 68, 68, 0.8);
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-danger:hover {
+  background-color: rgb(239, 68, 68);
+}
+
+/* Toggle/radio button group */
+.toggle-group {
+  display: flex;
+  background-color: var(--color-navy-800);
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+
+.toggle-option {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #9ca3af;
+}
+
+.toggle-option:hover {
+  color: white;
+}
+
+.toggle-option.selected {
+  background-color: var(--color-electric-500);
+  color: white;
+}
+
+/* Input styles */
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-navy-800);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: white;
+  transition: all 0.2s;
+}
+
+.input-field::placeholder {
+  color: #6b7280;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-electric-500);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy-800);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-600);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-electric-500);
+}
+
+/* Canvas toolbar */
+.canvas-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(30, 41, 59, 0.8);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(8px);
+}
+
+.tool-button {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  color: #9ca3af;
+}
+
+.tool-button:hover {
+  background-color: var(--color-navy-700);
+  color: white;
+}
+
+.tool-button.active {
+  background-color: var(--color-electric-500);
+  color: white;
+}
+
+/* Chat message styles */
+.chat-message {
+  padding: 1rem;
+  border-radius: 1rem;
+  max-width: 80%;
+}
+
+.chat-message.interviewer {
+  background-color: var(--color-navy-700);
+  border-top-left-radius: 0.125rem;
+}
+
+.chat-message.user {
+  background-color: var(--color-electric-500);
+  margin-left: auto;
+  border-top-right-radius: 0.125rem;
+}
+
+/* Mic button pulse animation */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.mic-recording {
+  position: relative;
+}
+
+.mic-recording::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.4);
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* KaTeX styling */
+.katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+/* Monaco editor container */
+.editor-container {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Tailwind color overrides for custom colors */
+.bg-navy-900 { background-color: var(--color-navy-900); }
+.bg-navy-800 { background-color: var(--color-navy-800); }
+.bg-navy-700 { background-color: var(--color-navy-700); }
+.bg-navy-600 { background-color: var(--color-navy-600); }
+.text-electric-500 { color: var(--color-electric-500); }
+.text-electric-400 { color: var(--color-electric-400); }
+.text-electric-300 { color: var(--color-electric-300); }
+.bg-electric-500 { background-color: var(--color-electric-500); }
+.bg-electric-400 { background-color: var(--color-electric-400); }
+.border-electric-500 { border-color: var(--color-electric-500); }
+.ring-electric-500 { --tw-ring-color: var(--color-electric-500); }
+.shadow-electric-500\/25 { --tw-shadow-color: rgba(59, 130, 246, 0.25); }
