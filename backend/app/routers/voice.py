@@ -7,6 +7,11 @@ from fastapi.responses import Response
 import uuid
 from typing import Dict, List
 from datetime import datetime
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from app.models.schemas import (
     StartSessionRequest, StartSessionResponse,
@@ -66,15 +71,15 @@ async def start_session(request: StartSessionRequest):
     audio_url = None
     try:
         if not elevenlabs_service.ELEVENLABS_API_KEY:
-            print("Warning: ELEVENLABS_API_KEY not set, skipping TTS")
+            logger.warning("ELEVENLABS_API_KEY not set, skipping TTS - will use browser fallback")
         else:
             voice_id = elevenlabs_service.get_voice_for_tone(request.tone.value)
-            print(f"Generating TTS with voice: {voice_id}")
+            logger.info(f"🎤 Generating Eleven Labs TTS with voice: {voice_id}")
             audio_base64 = await elevenlabs_service.text_to_speech_base64(opening_text, voice_id)
             audio_url = f"data:audio/mpeg;base64,{audio_base64}"
-            print(f"Generated audio, length: {len(audio_base64)} chars")
+            logger.info(f"✅ Eleven Labs audio generated successfully ({len(audio_base64)} chars)")
     except Exception as e:
-        print(f"Eleven Labs TTS Error: {e}")
+        logger.error(f"❌ Eleven Labs TTS Error: {e}")
         audio_url = None
     
     return StartSessionResponse(
@@ -124,13 +129,15 @@ async def respond(request: RespondRequest):
     audio_url = None
     try:
         if not elevenlabs_service.ELEVENLABS_API_KEY:
-            print("Warning: ELEVENLABS_API_KEY not set, skipping TTS")
+            logger.warning("ELEVENLABS_API_KEY not set, skipping TTS")
         else:
             voice_id = elevenlabs_service.get_voice_for_tone(session["tone"].value)
+            logger.info(f"🎤 Generating Eleven Labs TTS for response")
             audio_base64 = await elevenlabs_service.text_to_speech_base64(response_text, voice_id)
             audio_url = f"data:audio/mpeg;base64,{audio_base64}"
+            logger.info(f"✅ Eleven Labs audio generated ({len(audio_base64)} chars)")
     except Exception as e:
-        print(f"Eleven Labs TTS Error: {e}")
+        logger.error(f"❌ Eleven Labs TTS Error: {e}")
         audio_url = None
     
     return RespondResponse(
