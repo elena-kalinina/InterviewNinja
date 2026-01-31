@@ -79,48 +79,35 @@ Important: You are simulating a real interview. Stay in character throughout."""
 def get_opening_message(
     interview_type: InterviewType,
     tone: Tone,
+    verbosity: Verbosity,
     problem: Optional[str] = None
 ) -> str:
-    """Generate the opening message for the interview."""
+    """Generate the opening message using the LLM for natural conversation."""
     
-    # Extract just the problem name if it's a full description
-    problem_name = None
+    system_prompt = build_system_prompt(interview_type, tone, verbosity, problem)
+    
+    # Create a prompt to generate a natural opening
     if problem:
-        # Get first line or first 100 chars as the problem name
-        first_line = problem.split('\n')[0].strip()
-        problem_name = first_line[:100] if len(first_line) > 100 else first_line
-    
-    if interview_type == InterviewType.SYSTEM_DESIGN:
-        if problem_name:
-            opening = f"Hello! Today we're going to design a system together. I'd like you to walk me through how you would build {problem_name}. Before we start, could you briefly share your experience with ML system design?"
-        else:
-            opening = "Hello! Today we're going to work through a system design problem together. I'll present the scenario in just a moment. First, could you tell me a bit about your background with ML system design?"
-    
-    elif interview_type == InterviewType.LIVE_CODING:
-        if problem_name:
-            opening = f"Hi there! We have a coding challenge for you today. We'll be working on {problem_name}. Feel free to think out loud as you code. Are you ready to get started?"
-        else:
-            opening = "Hi there! Today we'll work through a coding problem together. I encourage you to think out loud as you work through your solution. Ready to see what we'll be tackling?"
-    
-    elif interview_type == InterviewType.ML_THEORY:
-        if problem_name:
-            opening = f"Welcome! Today we'll dive into some machine learning theory, specifically around {problem_name}. Let's start with a foundational question to warm up."
-        else:
-            opening = "Welcome! Today we'll explore some machine learning and deep learning concepts together. I'll ask you questions that might come up in a real interview. Ready to begin?"
-    
-    elif interview_type == InterviewType.COACHING:
-        opening = "Hi there! I'm here to help you prepare for your upcoming ML interviews. We can work on anything from behavioral questions to technical communication. What would you like to focus on today?"
-    
+        user_prompt = f"Start the interview. The topic/problem is: {problem}. Introduce yourself briefly and present the problem to the candidate in a natural, conversational way. Keep it concise (2-3 sentences max)."
     else:
-        opening = "Hello! Let's get started with your interview practice session."
+        user_prompt = "Start the interview. Introduce yourself briefly and ask an opening question to begin the session. Keep it concise (2-3 sentences max)."
     
-    # Adjust tone
-    if tone == Tone.FRIENDLY:
-        opening = "Great to meet you! " + opening
-    elif tone == Tone.ADVERSARIAL:
-        opening = opening.replace("Hello!", "Alright,").replace("Hi there!", "Let's begin.").replace("Welcome!", "Okay,")
-    
-    return opening
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.7,
+            max_tokens=200
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        # Fallback to a simple opening if LLM fails
+        print(f"LLM opening generation failed: {e}")
+        return "Hello! Let's get started with your interview practice session. Tell me a bit about yourself."
 
 
 async def generate_response(

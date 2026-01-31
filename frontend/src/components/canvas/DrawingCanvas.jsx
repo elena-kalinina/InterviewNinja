@@ -275,21 +275,37 @@ export default function DrawingCanvas() {
   };
 
   const isPointInShape = (point, shape) => {
+    const hitPadding = 10; // Extra padding for easier selection
+    
     switch (shape.type) {
-      case 'rectangle':
-        return point.x >= shape.x && point.x <= shape.x + shape.width &&
-               point.y >= shape.y && point.y <= shape.y + shape.height;
-      case 'circle':
+      case 'rectangle': {
+        // Normalize rectangle bounds (handle negative width/height)
+        const minX = Math.min(shape.x, shape.x + shape.width) - hitPadding;
+        const maxX = Math.max(shape.x, shape.x + shape.width) + hitPadding;
+        const minY = Math.min(shape.y, shape.y + shape.height) - hitPadding;
+        const maxY = Math.max(shape.y, shape.y + shape.height) + hitPadding;
+        return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+      }
+      case 'circle': {
         const dist = Math.sqrt(Math.pow(point.x - shape.x, 2) + Math.pow(point.y - shape.y, 2));
-        return dist <= shape.radius;
+        return dist <= shape.radius + hitPadding;
+      }
       case 'text':
-        return point.x >= shape.x && point.x <= shape.x + 100 &&
-               point.y >= shape.y - 20 && point.y <= shape.y + 10;
-      case 'arrow':
-        // Simplified hit detection for arrows
-        const midX = (shape.x1 + shape.x2) / 2;
-        const midY = (shape.y1 + shape.y2) / 2;
-        return Math.sqrt(Math.pow(point.x - midX, 2) + Math.pow(point.y - midY, 2)) < 20;
+        return point.x >= shape.x - hitPadding && point.x <= shape.x + 150 &&
+               point.y >= shape.y - 30 && point.y <= shape.y + 20;
+      case 'arrow': {
+        // Check distance to line segment
+        const { x1, y1, x2, y2 } = shape;
+        const lineLength = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+        if (lineLength === 0) return false;
+        
+        // Calculate distance from point to line
+        const t = Math.max(0, Math.min(1, ((point.x - x1) * (x2 - x1) + (point.y - y1) * (y2 - y1)) / (lineLength * lineLength)));
+        const projX = x1 + t * (x2 - x1);
+        const projY = y1 + t * (y2 - y1);
+        const distance = Math.sqrt(Math.pow(point.x - projX, 2) + Math.pow(point.y - projY, 2));
+        return distance < 15 + hitPadding;
+      }
       default:
         return false;
     }

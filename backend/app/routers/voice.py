@@ -42,10 +42,11 @@ async def start_session(request: StartSessionRequest):
         # URL scraping is handled separately before starting
         problem = request.problem_description  # Should be populated after scraping
     
-    # Generate opening message
+    # Generate opening message using LLM
     opening_text = openai_service.get_opening_message(
         interview_type=request.interview_type,
         tone=request.tone,
+        verbosity=request.verbosity,
         problem=problem
     )
     

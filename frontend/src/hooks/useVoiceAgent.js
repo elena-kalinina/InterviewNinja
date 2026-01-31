@@ -49,10 +49,8 @@ export function useVoiceAgent() {
         },
       ]);
 
-      // Play opening audio
-      if (response.audio_url) {
-        playAudio(response.audio_url);
-      }
+      // Speak the opening message
+      speakText(response.opening_text);
 
       return response;
     } catch (err) {
@@ -61,7 +59,7 @@ export function useVoiceAgent() {
     } finally {
       setIsLoading(false);
     }
-  }, [settings]);
+  }, [settings, speakText]);
 
   // Send user response and get AI reply
   const sendResponse = useCallback(async (userMessage) => {
@@ -92,10 +90,8 @@ export function useVoiceAgent() {
       };
       setMessages((prev) => [...prev, interviewerMsg]);
 
-      // Play audio response
-      if (response.audio_url) {
-        playAudio(response.audio_url);
-      }
+      // Speak the response
+      speakText(response.response_text);
 
       return response;
     } catch (err) {
@@ -104,16 +100,61 @@ export function useVoiceAgent() {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, speakText]);
 
-  // Play audio from URL or base64
-  const playAudio = useCallback((audioUrl) => {
+  // Speak text using browser's SpeechSynthesis (more reliable than Eleven Labs for demo)
+  const speakText = useCallback((text) => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+    
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    setIsPlaying(true);
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    
+    // Try to find a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+      v.name.toLowerCase().includes('female') || 
+      v.name.toLowerCase().includes('samantha') ||
+      v.name.toLowerCase().includes('victoria') ||
+      v.name.toLowerCase().includes('karen')
+    );
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+    
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsPlaying(false);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  // Play audio from URL or base64 (Eleven Labs) - fallback to browser TTS
+  const playAudio = useCallback((audioUrl, text) => {
+    // If we have text, use browser TTS (more reliable)
+    if (text) {
+      speakText(text);
+      return;
+    }
+    
     if (!audioUrl) {
       console.warn('No audio URL provided');
       return;
     }
     
-    console.log('Playing audio, URL length:', audioUrl.length);
     setIsPlaying(true);
     
     if (audioRef.current) {
@@ -125,32 +166,27 @@ export function useVoiceAgent() {
     audioRef.current = audio;
     
     audio.onended = () => {
-      console.log('Audio playback ended');
       setIsPlaying(false);
     };
     
-    audio.onerror = (e) => {
+    audio.onerror = () => {
       setIsPlaying(false);
-      console.error('Audio playback error:', e);
-      setError('Failed to play audio. Check if Eleven Labs API is configured.');
+      console.error('Audio playback error, falling back to browser TTS');
     };
 
-    audio.oncanplaythrough = () => {
-      console.log('Audio ready to play');
-    };
+    audio.play().catch((err) => {
+      console.error('Failed to play audio:', err);
+      setIsPlaying(false);
+    });
+  }, [speakText]);
 
-    audio.play()
-      .then(() => console.log('Audio playback started'))
-      .catch((err) => {
-        console.error('Failed to play audio:', err);
-        setIsPlaying(false);
-        // Browser autoplay policy might block audio
-        setError('Click anywhere on the page first, then try again (browser autoplay policy)');
-      });
-  }, []);
-
-  // Stop audio playback
+  // Stop audio playback (both browser TTS and audio element)
   const stopAudio = useCallback(() => {
+    // Stop browser speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    // Stop audio element
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
