@@ -25,6 +25,60 @@ export function useVoiceAgent() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
+  // Speak text using browser's SpeechSynthesis (must be defined first!)
+  const speakText = useCallback((text) => {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
+    
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    setIsPlaying(true);
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    
+    // Try to find a female voice
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v => 
+      v.name.toLowerCase().includes('female') || 
+      v.name.toLowerCase().includes('samantha') ||
+      v.name.toLowerCase().includes('victoria') ||
+      v.name.toLowerCase().includes('karen')
+    );
+    if (femaleVoice) {
+      utterance.voice = femaleVoice;
+    }
+    
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsPlaying(false);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  // Stop audio playback (both browser TTS and audio element)
+  const stopAudio = useCallback(() => {
+    // Stop browser speech synthesis
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    // Stop audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+  }, []);
+
   // Start a new interview session
   const startSession = useCallback(async () => {
     setIsLoading(true);
@@ -102,46 +156,6 @@ export function useVoiceAgent() {
     }
   }, [sessionId, speakText]);
 
-  // Speak text using browser's SpeechSynthesis (more reliable than Eleven Labs for demo)
-  const speakText = useCallback((text) => {
-    if (!('speechSynthesis' in window)) {
-      console.warn('Speech synthesis not supported');
-      return;
-    }
-    
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    setIsPlaying(true);
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    
-    // Try to find a female voice
-    const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(v => 
-      v.name.toLowerCase().includes('female') || 
-      v.name.toLowerCase().includes('samantha') ||
-      v.name.toLowerCase().includes('victoria') ||
-      v.name.toLowerCase().includes('karen')
-    );
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
-    }
-    
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
-    
-    utterance.onerror = () => {
-      setIsPlaying(false);
-    };
-    
-    window.speechSynthesis.speak(utterance);
-  }, []);
-
   // Play audio from URL or base64 (Eleven Labs) - fallback to browser TTS
   const playAudio = useCallback((audioUrl, text) => {
     // If we have text, use browser TTS (more reliable)
@@ -179,20 +193,6 @@ export function useVoiceAgent() {
       setIsPlaying(false);
     });
   }, [speakText]);
-
-  // Stop audio playback (both browser TTS and audio element)
-  const stopAudio = useCallback(() => {
-    // Stop browser speech synthesis
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    // Stop audio element
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setIsPlaying(false);
-  }, []);
 
   // Start recording user's voice
   const startRecording = useCallback(async () => {
