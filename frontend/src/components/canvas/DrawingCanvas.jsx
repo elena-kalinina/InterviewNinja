@@ -8,7 +8,9 @@ import {
   Trash2, 
   RotateCcw,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Eraser,
+  Undo2
 } from 'lucide-react';
 
 const TOOLS = [
@@ -17,6 +19,7 @@ const TOOLS = [
   { id: 'circle', icon: Circle, label: 'Circle' },
   { id: 'arrow', icon: ArrowRight, label: 'Arrow' },
   { id: 'text', icon: Type, label: 'Text' },
+  { id: 'eraser', icon: Eraser, label: 'Eraser' },
 ];
 
 const COLORS = [
@@ -42,6 +45,7 @@ export default function DrawingCanvas() {
   const [currentShape, setCurrentShape] = useState(null);
   const [editingText, setEditingText] = useState(null);
   const [zoom, setZoom] = useState(1);
+  const [history, setHistory] = useState([]); // For undo functionality
 
   // Get canvas dimensions
   const getCanvasSize = () => {
@@ -184,9 +188,21 @@ export default function DrawingCanvas() {
       return;
     }
     
+    if (activeTool === 'eraser') {
+      // Find and delete clicked shape
+      const clickedIndex = shapes.findIndex(shape => isPointInShape(pos, shape));
+      if (clickedIndex >= 0) {
+        setHistory([...history, shapes]); // Save for undo
+        setShapes(shapes.filter((_, i) => i !== clickedIndex));
+        setSelectedShape(null);
+      }
+      return;
+    }
+    
     if (activeTool === 'text') {
       const text = prompt('Enter text:');
       if (text) {
+        setHistory([...history, shapes]); // Save for undo
         setShapes([...shapes, {
           type: 'text',
           x: pos.x,
@@ -241,11 +257,21 @@ export default function DrawingCanvas() {
 
   const handleMouseUp = () => {
     if (currentShape) {
+      setHistory([...history, shapes]); // Save for undo
       setShapes([...shapes, currentShape]);
       setCurrentShape(null);
     }
     setIsDrawing(false);
     setStartPoint(null);
+  };
+
+  const handleUndo = () => {
+    if (history.length > 0) {
+      const previousState = history[history.length - 1];
+      setShapes(previousState);
+      setHistory(history.slice(0, -1));
+      setSelectedShape(null);
+    }
   };
 
   const isPointInShape = (point, shape) => {
@@ -271,6 +297,7 @@ export default function DrawingCanvas() {
 
   const handleDelete = () => {
     if (selectedShape !== null) {
+      setHistory([...history, shapes]); // Save for undo
       setShapes(shapes.filter((_, i) => i !== selectedShape));
       setSelectedShape(null);
     }
@@ -293,12 +320,37 @@ export default function DrawingCanvas() {
       const shape = shapes[selectedShape];
       const text = prompt('Enter text:', shape.text || '');
       if (text !== null) {
+        setHistory([...history, shapes]); // Save for undo
         const newShapes = [...shapes];
         newShapes[selectedShape] = { ...shape, text };
         setShapes(newShapes);
       }
     }
   };
+
+  // Keyboard shortcuts (Ctrl+Z for undo, Delete/Backspace to delete selected)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        if (history.length > 0) {
+          const previousState = history[history.length - 1];
+          setShapes(previousState);
+          setHistory(prev => prev.slice(0, -1));
+          setSelectedShape(null);
+        }
+      }
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedShape !== null) {
+        e.preventDefault();
+        setHistory(prev => [...prev, shapes]);
+        setShapes(prev => prev.filter((_, i) => i !== selectedShape));
+        setSelectedShape(null);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [history, selectedShape, shapes]);
 
   return (
     <div className="h-full flex flex-col">
@@ -337,6 +389,14 @@ export default function DrawingCanvas() {
 
         {/* Actions */}
         <div className="flex gap-1">
+          <button
+            onClick={handleUndo}
+            className="tool-button"
+            title="Undo (Ctrl+Z)"
+            disabled={history.length === 0}
+          >
+            <Undo2 className="w-5 h-5" />
+          </button>
           <button
             onClick={() => handleZoom('out')}
             className="tool-button"
@@ -389,6 +449,7 @@ export default function DrawingCanvas() {
         {activeTool === 'circle' && 'Click and drag to draw a circle.'}
         {activeTool === 'arrow' && 'Click and drag to draw an arrow.'}
         {activeTool === 'text' && 'Click to add text.'}
+        {activeTool === 'eraser' && 'Click on shapes to erase them.'}
       </div>
     </div>
   );
