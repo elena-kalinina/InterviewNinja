@@ -107,7 +107,7 @@ export default function LiveCodingTab({ voiceAgent }) {
         </div>
 
         {/* Editor */}
-        <div className="flex-1 editor-container min-h-0">
+        <div className="flex-1 editor-container min-h-0" style={{ maxHeight: 'calc(100% - 220px)' }}>
           <Editor
             height="100%"
             language={language}
@@ -129,12 +129,12 @@ export default function LiveCodingTab({ voiceAgent }) {
         </div>
 
         {/* Output Panel */}
-        <div className="mt-3 glass-card-light">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-white/10">
-            <Terminal className="w-4 h-4 text-gray-400" />
-            <span className="text-sm font-medium text-gray-400">Output</span>
+        <div className="mt-4 glass-card-light flex-shrink-0">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-navy-800/50">
+            <Terminal className="w-5 h-5 text-electric-400" />
+            <span className="text-base font-semibold text-white">Output</span>
           </div>
-          <pre className="p-4 text-sm font-mono text-gray-300 max-h-40 overflow-auto whitespace-pre-wrap">
+          <pre className="p-4 text-base font-mono text-gray-200 min-h-[120px] max-h-[200px] overflow-auto whitespace-pre-wrap bg-navy-900/50">
             {output || 'Click "Run" to execute your code'}
           </pre>
         </div>
