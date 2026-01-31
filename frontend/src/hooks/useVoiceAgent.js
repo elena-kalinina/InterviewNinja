@@ -61,8 +61,8 @@ export function useVoiceAgent() {
     };
   }, []);
 
-  // Speak text using browser's SpeechSynthesis (must be defined first!)
-  const speakText = useCallback((text) => {
+  // Speak text using browser's SpeechSynthesis (fallback)
+  const speakWithBrowser = useCallback((text) => {
     if (!('speechSynthesis' in window)) {
       console.warn('Speech synthesis not supported');
       return;
@@ -93,6 +93,43 @@ export function useVoiceAgent() {
     
     window.speechSynthesis.speak(utterance);
   }, []);
+
+  // Play Eleven Labs audio from base64 data URL
+  const playElevenLabsAudio = useCallback((audioUrl, fallbackText) => {
+    if (!audioUrl) {
+      console.log('No audio URL, falling back to browser TTS');
+      if (fallbackText) speakWithBrowser(fallbackText);
+      return;
+    }
+
+    setIsPlaying(true);
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    
+    audio.onended = () => {
+      setIsPlaying(false);
+    };
+    
+    audio.onerror = (e) => {
+      console.error('Eleven Labs audio error, falling back to browser TTS:', e);
+      setIsPlaying(false);
+      if (fallbackText) speakWithBrowser(fallbackText);
+    };
+
+    audio.play()
+      .then(() => console.log('Playing Eleven Labs audio'))
+      .catch((err) => {
+        console.error('Failed to play Eleven Labs audio:', err);
+        setIsPlaying(false);
+        if (fallbackText) speakWithBrowser(fallbackText);
+      });
+  }, [speakWithBrowser]);
 
   // Stop audio playback (both browser TTS and audio element)
   const stopAudio = useCallback(() => {
@@ -132,8 +169,8 @@ export function useVoiceAgent() {
         },
       ]);
 
-      // Speak the opening message
-      speakText(response.opening_text);
+      // Play Eleven Labs audio (with browser TTS fallback)
+      playElevenLabsAudio(response.audio_url, response.opening_text);
 
       return response;
     } catch (err) {
@@ -142,7 +179,7 @@ export function useVoiceAgent() {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, speakText]);
+  }, [settings, playElevenLabsAudio]);
 
   // Send user response and get AI reply
   const sendResponse = useCallback(async (userMessage) => {
@@ -173,8 +210,8 @@ export function useVoiceAgent() {
       };
       setMessages((prev) => [...prev, interviewerMsg]);
 
-      // Speak the response
-      speakText(response.response_text);
+      // Play Eleven Labs audio (with browser TTS fallback)
+      playElevenLabsAudio(response.audio_url, response.response_text);
 
       return response;
     } catch (err) {
@@ -183,45 +220,12 @@ export function useVoiceAgent() {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, speakText]);
+  }, [sessionId, playElevenLabsAudio]);
 
-  // Play audio from URL or base64 (Eleven Labs) - fallback to browser TTS
+  // Play audio - wrapper for playElevenLabsAudio
   const playAudio = useCallback((audioUrl, text) => {
-    // If we have text, use browser TTS (more reliable)
-    if (text) {
-      speakText(text);
-      return;
-    }
-    
-    if (!audioUrl) {
-      console.warn('No audio URL provided');
-      return;
-    }
-    
-    setIsPlaying(true);
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    
-    audio.onended = () => {
-      setIsPlaying(false);
-    };
-    
-    audio.onerror = () => {
-      setIsPlaying(false);
-      console.error('Audio playback error, falling back to browser TTS');
-    };
-
-    audio.play().catch((err) => {
-      console.error('Failed to play audio:', err);
-      setIsPlaying(false);
-    });
-  }, [speakText]);
+    playElevenLabsAudio(audioUrl, text);
+  }, [playElevenLabsAudio]);
 
   // Start recording user's voice
   const startRecording = useCallback(async () => {

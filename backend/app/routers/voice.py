@@ -62,13 +62,19 @@ async def start_session(request: StartSessionRequest):
         "created_at": datetime.now().isoformat()
     }
     
-    # Generate audio for opening
+    # Generate audio for opening using Eleven Labs
+    audio_url = None
     try:
-        voice_id = elevenlabs_service.get_voice_for_tone(request.tone.value)
-        audio_base64 = await elevenlabs_service.text_to_speech_base64(opening_text, voice_id)
-        audio_url = f"data:audio/mpeg;base64,{audio_base64}"
+        if not elevenlabs_service.ELEVENLABS_API_KEY:
+            print("Warning: ELEVENLABS_API_KEY not set, skipping TTS")
+        else:
+            voice_id = elevenlabs_service.get_voice_for_tone(request.tone.value)
+            print(f"Generating TTS with voice: {voice_id}")
+            audio_base64 = await elevenlabs_service.text_to_speech_base64(opening_text, voice_id)
+            audio_url = f"data:audio/mpeg;base64,{audio_base64}"
+            print(f"Generated audio, length: {len(audio_base64)} chars")
     except Exception as e:
-        print(f"TTS Error: {e}")
+        print(f"Eleven Labs TTS Error: {e}")
         audio_url = None
     
     return StartSessionResponse(
@@ -114,13 +120,17 @@ async def respond(request: RespondRequest):
         "timestamp": datetime.now().isoformat()
     })
     
-    # Generate audio
+    # Generate audio using Eleven Labs
+    audio_url = None
     try:
-        voice_id = elevenlabs_service.get_voice_for_tone(session["tone"].value)
-        audio_base64 = await elevenlabs_service.text_to_speech_base64(response_text, voice_id)
-        audio_url = f"data:audio/mpeg;base64,{audio_base64}"
+        if not elevenlabs_service.ELEVENLABS_API_KEY:
+            print("Warning: ELEVENLABS_API_KEY not set, skipping TTS")
+        else:
+            voice_id = elevenlabs_service.get_voice_for_tone(session["tone"].value)
+            audio_base64 = await elevenlabs_service.text_to_speech_base64(response_text, voice_id)
+            audio_url = f"data:audio/mpeg;base64,{audio_base64}"
     except Exception as e:
-        print(f"TTS Error: {e}")
+        print(f"Eleven Labs TTS Error: {e}")
         audio_url = None
     
     return RespondResponse(
