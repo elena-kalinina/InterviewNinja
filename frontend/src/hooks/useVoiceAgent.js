@@ -108,28 +108,45 @@ export function useVoiceAgent() {
 
   // Play audio from URL or base64
   const playAudio = useCallback((audioUrl) => {
+    if (!audioUrl) {
+      console.warn('No audio URL provided');
+      return;
+    }
+    
+    console.log('Playing audio, URL length:', audioUrl.length);
     setIsPlaying(true);
     
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current = null;
     }
 
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
     
     audio.onended = () => {
+      console.log('Audio playback ended');
       setIsPlaying(false);
     };
     
-    audio.onerror = () => {
+    audio.onerror = (e) => {
       setIsPlaying(false);
-      console.error('Audio playback error');
+      console.error('Audio playback error:', e);
+      setError('Failed to play audio. Check if Eleven Labs API is configured.');
     };
 
-    audio.play().catch((err) => {
-      console.error('Failed to play audio:', err);
-      setIsPlaying(false);
-    });
+    audio.oncanplaythrough = () => {
+      console.log('Audio ready to play');
+    };
+
+    audio.play()
+      .then(() => console.log('Audio playback started'))
+      .catch((err) => {
+        console.error('Failed to play audio:', err);
+        setIsPlaying(false);
+        // Browser autoplay policy might block audio
+        setError('Click anywhere on the page first, then try again (browser autoplay policy)');
+      });
   }, []);
 
   // Stop audio playback

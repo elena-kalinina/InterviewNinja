@@ -83,20 +83,42 @@ def get_opening_message(
 ) -> str:
     """Generate the opening message for the interview."""
     
-    openings = {
-        InterviewType.SYSTEM_DESIGN: "Hello! I'm excited to work through a system design problem with you today. We'll be designing {topic}. Before we dive in, could you tell me a bit about your experience with ML system design?",
-        InterviewType.LIVE_CODING: "Hi there! Today we're going to work through a coding problem together. {topic}. Feel free to think out loud as you work through it. Ready to see the problem?",
-        InterviewType.ML_THEORY: "Welcome! Today we'll explore some machine learning concepts together. {topic}. Let's start with a foundational question to warm up.",
-        InterviewType.COACHING: "Hi! I'm here to help you prepare for your ML interviews and career journey. {topic}. What aspects of your interview preparation would you like to focus on today?"
-    }
+    # Extract just the problem name if it's a full description
+    problem_name = None
+    if problem:
+        # Get first line or first 100 chars as the problem name
+        first_line = problem.split('\n')[0].strip()
+        problem_name = first_line[:100] if len(first_line) > 100 else first_line
     
-    topic_text = f"The topic is: {problem}" if problem else "I'll present the topic shortly"
-    opening = openings[interview_type].format(topic=topic_text)
+    if interview_type == InterviewType.SYSTEM_DESIGN:
+        if problem_name:
+            opening = f"Hello! Today we're going to design a system together. I'd like you to walk me through how you would build {problem_name}. Before we start, could you briefly share your experience with ML system design?"
+        else:
+            opening = "Hello! Today we're going to work through a system design problem together. I'll present the scenario in just a moment. First, could you tell me a bit about your background with ML system design?"
     
+    elif interview_type == InterviewType.LIVE_CODING:
+        if problem_name:
+            opening = f"Hi there! We have a coding challenge for you today. We'll be working on {problem_name}. Feel free to think out loud as you code. Are you ready to get started?"
+        else:
+            opening = "Hi there! Today we'll work through a coding problem together. I encourage you to think out loud as you work through your solution. Ready to see what we'll be tackling?"
+    
+    elif interview_type == InterviewType.ML_THEORY:
+        if problem_name:
+            opening = f"Welcome! Today we'll dive into some machine learning theory, specifically around {problem_name}. Let's start with a foundational question to warm up."
+        else:
+            opening = "Welcome! Today we'll explore some machine learning and deep learning concepts together. I'll ask you questions that might come up in a real interview. Ready to begin?"
+    
+    elif interview_type == InterviewType.COACHING:
+        opening = "Hi there! I'm here to help you prepare for your upcoming ML interviews. We can work on anything from behavioral questions to technical communication. What would you like to focus on today?"
+    
+    else:
+        opening = "Hello! Let's get started with your interview practice session."
+    
+    # Adjust tone
     if tone == Tone.FRIENDLY:
         opening = "Great to meet you! " + opening
     elif tone == Tone.ADVERSARIAL:
-        opening = opening.replace("excited", "ready").replace("Great to meet you! ", "")
+        opening = opening.replace("Hello!", "Alright,").replace("Hi there!", "Let's begin.").replace("Welcome!", "Okay,")
     
     return opening
 

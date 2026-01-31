@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import * as fabric from 'fabric';
+import { useEffect, useRef, useState } from 'react';
 import { 
   Square, 
   Circle, 
@@ -33,230 +32,272 @@ const COLORS = [
 
 export default function DrawingCanvas() {
   const canvasRef = useRef(null);
-  const fabricRef = useRef(null);
   const containerRef = useRef(null);
   const [activeTool, setActiveTool] = useState('select');
   const [activeColor, setActiveColor] = useState(COLORS[0]);
+  const [shapes, setShapes] = useState([]);
+  const [selectedShape, setSelectedShape] = useState(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const startPointRef = useRef(null);
-  const tempShapeRef = useRef(null);
+  const [startPoint, setStartPoint] = useState(null);
+  const [currentShape, setCurrentShape] = useState(null);
+  const [editingText, setEditingText] = useState(null);
+  const [zoom, setZoom] = useState(1);
 
-  // Initialize Fabric canvas
+  // Get canvas dimensions
+  const getCanvasSize = () => {
+    if (containerRef.current) {
+      return {
+        width: containerRef.current.clientWidth,
+        height: containerRef.current.clientHeight
+      };
+    }
+    return { width: 800, height: 600 };
+  };
+
+  // Draw all shapes on canvas
   useEffect(() => {
-    if (!canvasRef.current || fabricRef.current) return;
-
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      backgroundColor: '#0f172a',
-      selection: true,
-      preserveObjectStacking: true,
-    });
-
-    fabricRef.current = canvas;
-
-    // Handle window resize
-    const handleResize = () => {
-      const container = containerRef.current;
-      if (container && canvas) {
-        canvas.setDimensions({
-          width: container.clientWidth,
-          height: container.clientHeight,
-        });
-        canvas.renderAll();
-      }
-    };
-
-    // Delay initial resize to ensure container has dimensions
-    setTimeout(handleResize, 100);
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      canvas.dispose();
-      fabricRef.current = null;
-    };
-  }, []);
-
-  // Handle tool change
-  useEffect(() => {
-    const canvas = fabricRef.current;
+    const canvas = canvasRef.current;
     if (!canvas) return;
-
-    canvas.isDrawingMode = false;
-    canvas.selection = activeTool === 'select';
     
-    canvas.getObjects().forEach((obj) => {
-      obj.selectable = activeTool === 'select';
-      obj.evented = activeTool === 'select';
+    const ctx = canvas.getContext('2d');
+    const { width, height } = getCanvasSize();
+    
+    // Set canvas size
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Clear and set background
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Apply zoom
+    ctx.save();
+    ctx.scale(zoom, zoom);
+    
+    // Draw all shapes
+    shapes.forEach((shape, index) => {
+      drawShape(ctx, shape, index === selectedShape);
     });
+    
+    // Draw current shape being created
+    if (currentShape) {
+      drawShape(ctx, currentShape, false);
+    }
+    
+    ctx.restore();
+  }, [shapes, currentShape, selectedShape, zoom]);
 
-    canvas.renderAll();
-  }, [activeTool]);
+  const drawShape = (ctx, shape, isSelected) => {
+    ctx.strokeStyle = shape.color;
+    ctx.fillStyle = shape.color;
+    ctx.lineWidth = 2;
+    
+    if (isSelected) {
+      ctx.strokeStyle = '#60a5fa';
+      ctx.lineWidth = 3;
+    }
 
-  // Create arrow shape
-  const createArrow = useCallback((x1, y1, x2, y2, color) => {
-    const angle = Math.atan2(y2 - y1, x2 - x1);
-    const headLength = 15;
+    switch (shape.type) {
+      case 'rectangle':
+        ctx.beginPath();
+        ctx.roundRect(shape.x, shape.y, shape.width, shape.height, 8);
+        ctx.stroke();
+        if (shape.text) {
+          ctx.fillStyle = shape.color;
+          ctx.font = '14px Plus Jakarta Sans';
+          ctx.textAlign = 'center';
+          ctx.fillText(shape.text, shape.x + shape.width / 2, shape.y + shape.height / 2 + 5);
+        }
+        break;
+        
+      case 'circle':
+        ctx.beginPath();
+        ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        if (shape.text) {
+          ctx.fillStyle = shape.color;
+          ctx.font = '14px Plus Jakarta Sans';
+          ctx.textAlign = 'center';
+          ctx.fillText(shape.text, shape.x, shape.y + 5);
+        }
+        break;
+        
+      case 'arrow':
+        // Draw line
+        ctx.beginPath();
+        ctx.moveTo(shape.x1, shape.y1);
+        ctx.lineTo(shape.x2, shape.y2);
+        ctx.stroke();
+        
+        // Draw arrowhead
+        const angle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
+        const headLength = 15;
+        ctx.beginPath();
+        ctx.moveTo(shape.x2, shape.y2);
+        ctx.lineTo(
+          shape.x2 - headLength * Math.cos(angle - Math.PI / 6),
+          shape.y2 - headLength * Math.sin(angle - Math.PI / 6)
+        );
+        ctx.moveTo(shape.x2, shape.y2);
+        ctx.lineTo(
+          shape.x2 - headLength * Math.cos(angle + Math.PI / 6),
+          shape.y2 - headLength * Math.sin(angle + Math.PI / 6)
+        );
+        ctx.stroke();
+        
+        // Draw label if exists
+        if (shape.text) {
+          const midX = (shape.x1 + shape.x2) / 2;
+          const midY = (shape.y1 + shape.y2) / 2;
+          ctx.fillStyle = shape.color;
+          ctx.font = '12px Plus Jakarta Sans';
+          ctx.textAlign = 'center';
+          ctx.fillText(shape.text, midX, midY - 10);
+        }
+        break;
+        
+      case 'text':
+        ctx.fillStyle = shape.color;
+        ctx.font = '16px Plus Jakarta Sans';
+        ctx.textAlign = 'left';
+        ctx.fillText(shape.text || 'Text', shape.x, shape.y);
+        break;
+    }
+  };
 
-    const line = new fabric.Line([x1, y1, x2, y2], {
-      stroke: color,
-      strokeWidth: 2,
-      selectable: false,
-    });
-
-    const head = new fabric.Triangle({
-      left: x2,
-      top: y2,
-      width: headLength,
-      height: headLength,
-      fill: color,
-      angle: (angle * 180) / Math.PI + 90,
-      originX: 'center',
-      originY: 'center',
-      selectable: false,
-    });
-
-    return new fabric.Group([line, head], {
-      selectable: true,
-    });
-  }, []);
-
-  // Handle mouse events for drawing shapes
-  useEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    const handleMouseDown = (options) => {
-      if (activeTool === 'select') return;
-      
-      const pointer = canvas.getPointer(options.e);
-      startPointRef.current = { x: pointer.x, y: pointer.y };
-      setIsDrawing(true);
-
-      if (activeTool === 'text') {
-        const text = new fabric.IText('Type here', {
-          left: pointer.x,
-          top: pointer.y,
-          fontSize: 18,
-          fill: activeColor,
-          fontFamily: 'Plus Jakarta Sans, sans-serif',
-        });
-        canvas.add(text);
-        canvas.setActiveObject(text);
-        text.enterEditing();
-        setActiveTool('select');
-      }
+  const getMousePos = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom
     };
+  };
 
-    const handleMouseMove = (options) => {
-      if (!isDrawing || !startPointRef.current) return;
-      if (activeTool === 'select' || activeTool === 'text') return;
-
-      const pointer = canvas.getPointer(options.e);
-      const start = startPointRef.current;
-
-      // Remove temporary shape if exists
-      if (tempShapeRef.current) {
-        canvas.remove(tempShapeRef.current);
-        tempShapeRef.current = null;
+  const handleMouseDown = (e) => {
+    const pos = getMousePos(e);
+    
+    if (activeTool === 'select') {
+      // Find clicked shape
+      const clickedIndex = shapes.findIndex(shape => isPointInShape(pos, shape));
+      setSelectedShape(clickedIndex >= 0 ? clickedIndex : null);
+      return;
+    }
+    
+    if (activeTool === 'text') {
+      const text = prompt('Enter text:');
+      if (text) {
+        setShapes([...shapes, {
+          type: 'text',
+          x: pos.x,
+          y: pos.y,
+          text,
+          color: activeColor
+        }]);
       }
+      return;
+    }
+    
+    setIsDrawing(true);
+    setStartPoint(pos);
+  };
 
-      let shape;
+  const handleMouseMove = (e) => {
+    if (!isDrawing || !startPoint) return;
+    
+    const pos = getMousePos(e);
+    
+    if (activeTool === 'rectangle') {
+      setCurrentShape({
+        type: 'rectangle',
+        x: Math.min(startPoint.x, pos.x),
+        y: Math.min(startPoint.y, pos.y),
+        width: Math.abs(pos.x - startPoint.x),
+        height: Math.abs(pos.y - startPoint.y),
+        color: activeColor
+      });
+    } else if (activeTool === 'circle') {
+      const radius = Math.sqrt(
+        Math.pow(pos.x - startPoint.x, 2) + Math.pow(pos.y - startPoint.y, 2)
+      );
+      setCurrentShape({
+        type: 'circle',
+        x: startPoint.x,
+        y: startPoint.y,
+        radius,
+        color: activeColor
+      });
+    } else if (activeTool === 'arrow') {
+      setCurrentShape({
+        type: 'arrow',
+        x1: startPoint.x,
+        y1: startPoint.y,
+        x2: pos.x,
+        y2: pos.y,
+        color: activeColor
+      });
+    }
+  };
 
-      if (activeTool === 'rectangle') {
-        const width = pointer.x - start.x;
-        const height = pointer.y - start.y;
-        shape = new fabric.Rect({
-          left: width > 0 ? start.x : pointer.x,
-          top: height > 0 ? start.y : pointer.y,
-          width: Math.abs(width),
-          height: Math.abs(height),
-          fill: 'transparent',
-          stroke: activeColor,
-          strokeWidth: 2,
-          rx: 8,
-          ry: 8,
-          selectable: false,
-          evented: false,
-        });
-      } else if (activeTool === 'circle') {
-        const radius = Math.sqrt(
-          Math.pow(pointer.x - start.x, 2) + Math.pow(pointer.y - start.y, 2)
-        ) / 2;
-        shape = new fabric.Circle({
-          left: (start.x + pointer.x) / 2 - radius,
-          top: (start.y + pointer.y) / 2 - radius,
-          radius: radius,
-          fill: 'transparent',
-          stroke: activeColor,
-          strokeWidth: 2,
-          selectable: false,
-          evented: false,
-        });
-      } else if (activeTool === 'arrow') {
-        shape = createArrow(start.x, start.y, pointer.x, pointer.y, activeColor);
-        shape.selectable = false;
-        shape.evented = false;
-      }
+  const handleMouseUp = () => {
+    if (currentShape) {
+      setShapes([...shapes, currentShape]);
+      setCurrentShape(null);
+    }
+    setIsDrawing(false);
+    setStartPoint(null);
+  };
 
-      if (shape) {
-        tempShapeRef.current = shape;
-        canvas.add(shape);
-        canvas.renderAll();
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (!isDrawing) return;
-      setIsDrawing(false);
-
-      // Make temp shape permanent
-      if (tempShapeRef.current) {
-        tempShapeRef.current.selectable = activeTool === 'select';
-        tempShapeRef.current.evented = activeTool === 'select';
-        tempShapeRef.current = null;
-      }
-
-      startPointRef.current = null;
-      const canvas = fabricRef.current;
-      if (canvas) canvas.renderAll();
-    };
-
-    canvas.on('mouse:down', handleMouseDown);
-    canvas.on('mouse:move', handleMouseMove);
-    canvas.on('mouse:up', handleMouseUp);
-
-    return () => {
-      canvas.off('mouse:down', handleMouseDown);
-      canvas.off('mouse:move', handleMouseMove);
-      canvas.off('mouse:up', handleMouseUp);
-    };
-  }, [activeTool, activeColor, isDrawing, createArrow]);
+  const isPointInShape = (point, shape) => {
+    switch (shape.type) {
+      case 'rectangle':
+        return point.x >= shape.x && point.x <= shape.x + shape.width &&
+               point.y >= shape.y && point.y <= shape.y + shape.height;
+      case 'circle':
+        const dist = Math.sqrt(Math.pow(point.x - shape.x, 2) + Math.pow(point.y - shape.y, 2));
+        return dist <= shape.radius;
+      case 'text':
+        return point.x >= shape.x && point.x <= shape.x + 100 &&
+               point.y >= shape.y - 20 && point.y <= shape.y + 10;
+      case 'arrow':
+        // Simplified hit detection for arrows
+        const midX = (shape.x1 + shape.x2) / 2;
+        const midY = (shape.y1 + shape.y2) / 2;
+        return Math.sqrt(Math.pow(point.x - midX, 2) + Math.pow(point.y - midY, 2)) < 20;
+      default:
+        return false;
+    }
+  };
 
   const handleDelete = () => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    const activeObjects = canvas.getActiveObjects();
-    activeObjects.forEach((obj) => canvas.remove(obj));
-    canvas.discardActiveObject();
-    canvas.renderAll();
+    if (selectedShape !== null) {
+      setShapes(shapes.filter((_, i) => i !== selectedShape));
+      setSelectedShape(null);
+    }
   };
 
   const handleClear = () => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    canvas.clear();
-    canvas.backgroundColor = '#0f172a';
-    canvas.renderAll();
+    setShapes([]);
+    setSelectedShape(null);
   };
 
   const handleZoom = (direction) => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    let zoom = canvas.getZoom();
-    zoom = direction === 'in' ? zoom * 1.1 : zoom / 1.1;
-    zoom = Math.min(Math.max(zoom, 0.5), 3);
-    canvas.setZoom(zoom);
-    canvas.renderAll();
+    setZoom(prev => {
+      const newZoom = direction === 'in' ? prev * 1.2 : prev / 1.2;
+      return Math.min(Math.max(newZoom, 0.5), 3);
+    });
+  };
+
+  const handleDoubleClick = (e) => {
+    if (selectedShape !== null) {
+      const shape = shapes[selectedShape];
+      const text = prompt('Enter text:', shape.text || '');
+      if (text !== null) {
+        const newShapes = [...shapes];
+        newShapes[selectedShape] = { ...shape, text };
+        setShapes(newShapes);
+      }
+    }
   };
 
   return (
@@ -287,7 +328,7 @@ export default function DrawingCanvas() {
               key={color}
               onClick={() => setActiveColor(color)}
               className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                activeColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-navy-900' : ''
+                activeColor === color ? 'ring-2 ring-white ring-offset-2 ring-offset-[#0f172a]' : ''
               }`}
               style={{ backgroundColor: color }}
             />
@@ -314,6 +355,7 @@ export default function DrawingCanvas() {
             onClick={handleDelete}
             className="tool-button"
             title="Delete Selected"
+            disabled={selectedShape === null}
           >
             <Trash2 className="w-5 h-5" />
           </button>
@@ -328,17 +370,25 @@ export default function DrawingCanvas() {
       </div>
 
       {/* Canvas Container */}
-      <div ref={containerRef} className="flex-1 relative overflow-hidden">
-        <canvas ref={canvasRef} />
+      <div ref={containerRef} className="flex-1 relative overflow-hidden cursor-crosshair">
+        <canvas
+          ref={canvasRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onDoubleClick={handleDoubleClick}
+          className="absolute inset-0"
+        />
       </div>
 
       {/* Instructions */}
       <div className="px-4 py-2 text-xs text-gray-500 border-t border-white/10">
-        {activeTool === 'select' && 'Click to select objects. Drag to move.'}
+        {activeTool === 'select' && 'Click to select. Double-click to add text to shapes.'}
         {activeTool === 'rectangle' && 'Click and drag to draw a rectangle.'}
         {activeTool === 'circle' && 'Click and drag to draw a circle.'}
         {activeTool === 'arrow' && 'Click and drag to draw an arrow.'}
-        {activeTool === 'text' && 'Click to add text. Double-click to edit.'}
+        {activeTool === 'text' && 'Click to add text.'}
       </div>
     </div>
   );
