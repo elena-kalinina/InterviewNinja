@@ -79,7 +79,7 @@ Open http://localhost:5173 in your browser.
 
 ### Screenshots
 
-*Coming soon*
+![InterviewNinja System Design](assets/screenshot.png)
 
 ### Future Plans
 
