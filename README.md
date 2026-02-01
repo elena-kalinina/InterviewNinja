@@ -1,174 +1,89 @@
-# InterviewNinja 🥷
+# Cursor 2-Day AI Hackathon
 
-A voice-powered ML/AI interview preparation platform. Practice technical interviews with an AI interviewer that speaks, listens, and provides feedback.
+![Cursor 2-Day AI Hackathon](https://ai-beavers.com/_next/image?url=%2Fimages%2Fhackathon-hero-20012026.png&w=1920&q=75)
 
-## Features
+---
 
-- **4 Interview Types**:
-  - 🧠 **System Design** - Draw diagrams on an interactive canvas while discussing ML system architecture
-  - 💻 **Live Coding** - Write and execute code in a Monaco editor (Python, JavaScript, Java, etc.)
-  - 📚 **ML Theory** - Discuss theoretical concepts with LaTeX formula rendering
-  - 💬 **Coaching** - General interview prep and career coaching
+# InterviewNinja
 
-- **Voice Interaction**:
-  - AI interviewer speaks using Eleven Labs TTS (female voice)
-  - Speech-to-text for your responses
-  - Natural conversation flow
-
-- **Customization**:
-  - **Verbosity**: Low / Medium / High
-  - **Tone**: Friendly / Neutral / Adversarial
-  - **Problem Source**: Random / Custom Description / URL Scraping
-
-- **Session Management**:
-  - Save interview transcripts
-  - AI-powered session analysis with scores and feedback
+> AI-powered voice agent that helps ML/AI professionals practice technical interviews through realistic simulations
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, Vite, TailwindCSS |
-| Canvas | Fabric.js |
-| Code Editor | Monaco Editor |
-| Formula Rendering | KaTeX |
-| Backend | FastAPI (Python) |
-| Voice TTS | Eleven Labs API |
-| Voice STT | Web Speech API |
-| LLM | OpenAI GPT-4 |
-| Code Execution | Piston API |
+- **Frontend**: React 18, Vite, TailwindCSS, Monaco Editor, KaTeX
+- **Backend**: Python, FastAPI, Uvicorn
+- **AI/ML**: OpenAI GPT-4 (conversation & analysis), Eleven Labs (text-to-speech)
+- **Code Execution**: Piston API
+- **Other**: Web Speech API (speech recognition), HTML5 Canvas
 
-## Prerequisites
-
-- Node.js 18+
-- Python 3.11+
-- OpenAI API key
-- Eleven Labs API key
-
-## Setup
-
-### 1. Clone and Configure Environment
+## How to Run
 
 ```bash
+# Clone the repo
+git clone https://github.com/elena-kalinina/InterviewNinja.git
 cd InterviewNinja
 
-# Create .env file with your API keys
-cat > .env << EOF
-OPENAI_API_KEY=your_openai_api_key_here
-ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
-EOF
-```
-
-### 2. Backend Setup
-
-```bash
-# Create virtual environment
+# Backend setup
+cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-# Install dependencies
-pip install -r backend/requirements.txt
+# Set up environment variables
+cp .env.example .env
+# Add your API keys to .env:
+# OPENAI_API_KEY=your_openai_key
+# ELEVENLABS_API_KEY=your_elevenlabs_key
 
-# Run the server
-cd backend
-uvicorn app.main:app --reload --port 8000
-```
+# Run the backend
+uvicorn app.main:app --reload
 
-### 3. Frontend Setup
-
-```bash
+# Frontend setup (new terminal)
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-### 4. Access the Application
+Open http://localhost:5173 in your browser.
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
+## Details
 
-## Usage
+### Features
 
-1. **Select Interview Type** - Choose from the tabs at the top
-2. **Configure Settings** - Set verbosity, tone, and problem source in the sidebar
-3. **Start Interview** - Click the "Start Interview" button
-4. **Interact** - Use the microphone button to speak or type in the chat
-5. **Analyze** - Click "Analyze" to get AI feedback on your performance
+- **4 Interview Types**: System Design, Live Coding, ML Theory, Career Coaching
+- **Voice Interaction**: Speak naturally with the AI interviewer using your microphone
+- **Realistic TTS**: Natural-sounding interviewer voice powered by Eleven Labs
+- **Customizable Settings**: Adjust verbosity (low/medium/high) and tone (friendly/neutral/adversarial)
+- **Problem Sources**: Random problems, custom descriptions, or scrape from URLs
+- **Live Coding**: Write and execute code with Monaco Editor
+- **Drawing Canvas**: Sketch system design diagrams with shapes, arrows, and text
+- **Formula Rendering**: LaTeX formula support for ML theory discussions
+- **Session Analysis**: Get AI-powered feedback on your interview performance
 
-## Project Structure
+### Architecture
 
 ```
-InterviewNinja/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app entry point
-│   │   ├── routers/
-│   │   │   ├── voice.py         # Voice/interview endpoints
-│   │   │   ├── session.py       # Session management
-│   │   │   ├── scraper.py       # URL scraping
-│   │   │   └── code_execution.py # Code runner
-│   │   ├── services/
-│   │   │   ├── openai_service.py    # GPT-4 integration
-│   │   │   ├── elevenlabs_service.py # TTS
-│   │   │   └── problem_bank.py      # Sample problems
-│   │   └── models/
-│   │       └── schemas.py       # Pydantic models
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx              # Main app component
-│   │   ├── components/
-│   │   │   ├── tabs/            # Interview type tabs
-│   │   │   ├── controls/        # Voice and settings controls
-│   │   │   ├── canvas/          # Drawing canvas
-│   │   │   └── shared/          # Reusable components
-│   │   ├── hooks/
-│   │   │   ├── useVoiceAgent.js # Voice interaction hook
-│   │   │   └── useSession.js    # Session management hook
-│   │   └── services/
-│   │       └── api.js           # Backend API client
-│   ├── index.html
-│   └── package.json
-├── .env                         # API keys (not in git)
-└── README.md
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│  React Frontend │────▶│  FastAPI Backend│────▶│  OpenAI GPT-4   │
+│                 │     │                 │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                       │                       
+        │                       ▼                       
+        │               ┌─────────────────┐            
+        │               │                 │            
+        └──────────────▶│  Eleven Labs    │            
+                        │  (TTS)          │            
+                        └─────────────────┘            
 ```
 
-## API Endpoints
+### Screenshots
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/voice/start` | POST | Start new interview session |
-| `/api/voice/respond` | POST | Send user message, get AI response |
-| `/api/voice/tts` | POST | Text-to-speech conversion |
-| `/api/session/save` | POST | Save session transcript |
-| `/api/session/analyze` | POST | Get AI analysis of session |
-| `/api/scraper/extract` | POST | Extract problems from URL |
-| `/api/code/execute` | POST | Execute code via Piston |
+*Coming soon*
 
-## Voice Selection
+### Future Plans
 
-The platform uses Eleven Labs for text-to-speech. The default voice is configured to be a warm female voice. You can customize this in `backend/app/services/elevenlabs_service.py`.
-
-## Troubleshooting
-
-### Microphone not working
-- Ensure your browser has microphone permissions
-- Check that no other application is using the microphone
-- Try using Chrome for best Web Speech API support
-
-### Code execution fails
-- The Piston API is a free service with rate limits
-- For production, consider self-hosting Piston or using Pyodide for Python
-
-### Audio not playing
-- Check browser autoplay settings
-- Ensure Eleven Labs API key is valid and has credits
-
-## License
-
-MIT
+- Response streaming for faster perceived latency
+- Session history and replay
+- More interview problem sources
+- Mobile-responsive design
